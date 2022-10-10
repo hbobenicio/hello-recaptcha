@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recaptcha :: v2</title>
+
+    <!-- 1. The first step is to load the Recaptcha script -->
+    <!-- Its URL accepts some query params as configurations. For a complete reference, check the link bellow: -->
+    <!-- https://developers.google.com/recaptcha/docs/display#javascript_resource_apijs_parameters -->
+    <script src="https://www.google.com/recaptcha/api.js?hl=pt-BR" async defer></script>
+
+    <style>
+        fieldset {
+            margin-left: 0;
+            margin-right: 0;
+        }
+
+        .form-group {
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Recaptcha :: v2 :: Checkbox :: Renderização Automática</h1>
+    </header>
+    <main>
+        <form onsubmit="onSubmit(event);">
+            <fieldset>
+                <legend>Meu Formulário</legend>
+                <div class="form-group">
+                    <label for="username">Nome de usuário:</label>
+                    <input id="username" type="text" />
+                </div>
+                <div class="form-group">
+                    <label for="password">Senha:</label>
+                    <input id="password" type="text" />
+                </div>
+                <div class="form-group">
+
+                    <!-- 2. Add to the UI the Recaptcha widget -->
+                    <!-- The site key is used to invoke reCAPTCHA service on your site or mobile application. -->
+                    <div id="captcha" class="g-recaptcha"
+                        data-sitekey="YOUR_SITE_KEY"
+                        data-theme="light"
+                        data-size="normal"
+                        data-callback="onRecaptchaSuccess"
+                        data-expired-callback="onRecaptchaExpired"
+                        data-error-callback="onRecaptchaError">
+                        Carregando captcha...
+                    </div>
+                </div>
+            </fieldset>
+            <div class="form-group">
+                <input type="submit" value="Submit" />
+            </div>
+        </form>
+    </main>
+    <script>
+        /**
+         * Just an utility service to call our demo backend endpoint.
+         */
+        class BackendService {
+            static baseUrl = 'api';
+
+            constructor() {}
+
+            async makeRequest(formData) {
+                const url = `${BackendService.baseUrl}/demo-recaptcha-v2-endpoint`;
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-type': 'application/json',
+                    },
+                    body: JSON.stringify(formData),
+                });
+
+                if (!response.ok) {
+                    console.error('BackendService.makeRequest failed. response=', response);
+                    return;
+                }
+
+                console.log('BackendService.makeRequest succeeded. response=', response);
+            }
+        }
+    </script>
+    <script>
+        const backendService = new BackendService();
+
+        const usernameInputElement = document.getElementById('username');
+        const passwordInputElement = document.getElementById('password');
+
+        function onSubmit(event) {
+            console.log(event);
+            event.preventDefault();
+            console.log('onSubmit event');
+
+            const username = usernameInputElement.value;
+            const password = passwordInputElement.value;
+
+            // É possível pegar o token de resposta daqui ou
+            // via callback passada para a tag attribute `data-callback` do widget.
+            //
+            // Each reCAPTCHA user response token is valid for two minutes, and can only be verified once to prevent replay attacks.
+            // If you need a new token, you can re-run the reCAPTCHA verification.
+            const recaptchaResponseToken = grecaptcha.getResponse();
+            if (!recaptchaResponseToken) {
+                console.warn('Submissão invalidada: você ainda não respondeu ao captcha');
+                return false;
+            }
+
+            const formData = { username, password, recaptchaResponseToken };
+            console.log('Response Token got from recaptcha challenge (this needs to be validated by the backend):', recaptchaResponseToken);
+
+            backendService.makeRequest(formData)
+                .then(() => console.log('It Works!!!'))
+                .catch(console.error);
+
+            return false;
+        }
+
+        function onRecaptchaSuccess(recaptchaResponseToken) {
+            console.debug('onRecaptchaSuccess event');
+
+            // É possível pegar o token de resposta daqui ou via `grecaptcha.getResponse`
+        }
+
+        function onRecaptchaExpired() {
+            console.debug('onRecaptchaExpired event');
+        }
+
+        function onRecaptchaError() {
+            console.debug('onRecaptchaError event');
+        }
+    </script>
+</body>
+</html>

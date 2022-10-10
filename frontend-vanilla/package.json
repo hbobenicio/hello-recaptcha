@@ -1,0 +1,15 @@
+{
+    "name": "frontend-vanilla",
+    "version": "0.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "start": "live-server --host=localhost --watch=public --proxy=/api:http://localhost:8081/api public",
+        "http-server": "http-server"
+    },
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "live-server": "^1.2.2"
+    }
+}
